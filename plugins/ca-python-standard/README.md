@@ -1,21 +1,24 @@
 # CA Python Devbox Plugin
 
-* Installs `pipx` (via `pipx` [plugin](https://github.com/cultureamp/devbox-extras/tree/main/plugins/pipx))
 * Installs [`poetry`](https://python-poetry.org) to manage package installation
-* Decides whether you need private python packages
-  * This is determined by the presence of extra repos in `pyproject.toml`
-  * It can be overridden by setting the environment variable `POETRY_CA_PRIVATE_PYTHON` to the string `false`, probably in the `env` section of your `devbox.json`)
-* If you need private python packages
-  * Installs `poetry-codeartifact-auth` as a poetry plugin
-  * Checks that you have an appropriate environment variable set to point to an AWS role which can access CodeArtifact
+* Installs `poetry-codeartifact-auth` as a poetry plugin
+* Uses a pre-configured AWS role for authentication
 * Installs [`pre-commit`](https://pre-commit.com) hooks, if the `pre-commit` package is present in `pyproject.toml` (or `pre-commit` is installed externally). 
-* Automatically activates virtual env in `$VENV_DIR` unless `$DEVBOX_PYTHON_AUTO_VENV` environment variable is `false`
-  * Culture Amp convention is to set `VENV_DIR` to `"$PWD/.venv` in your `devbox.json` but this is only a loose convention and subject to change
 
 
 ## Usage
 
-This plugin is designed to work for common cases with minimal extra configuration needed. See notes above about environment variables you may wish to set in some cases, eg `POETRY_CA_PRIVATE_PYTHON`.
+This plugin is designed to work for common cases with minimal extra configuration needed.
+
+* Because the plugin assumes use of CodeArtifact, it will add `ca-codeartifact-default` as a package source to `pyproject.toml`. This means you may need to run `poetry lock` after the first `devbox run setup` cycle, and then run setup again.
+* Sometimes the Okta authentication flow interrupts AWS authentication. In this case running the "python-install" step again should open a browser window to the expected AWS confirmation page.
+
+If you do not want any private package setup, set your `devbox.json` to contain the following:
+
+    "env": {
+      "POETRY_CA_PRIVATE_PYTHON": "false"
+    }
+
 
 The main thing to know is **the package installation step doesn't run by default** (you don't want to always run in an init hook as it's expensive). The package installation can be run using the auto-created `python-install` script using
 
